@@ -1350,28 +1350,25 @@ export default function Portfolio() {
             box-shadow: 0 0 6px #a855f7;
           }
           
-          .sparkle-particle {
-            position: fixed;
-            pointer-events: none;
-            z-index: 10000;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            animation: sparkle-burst 0.8s ease-out forwards;
-          }
-          
-          @keyframes sparkle-burst {
-            0% {
-              opacity: 1;
-              transform: translate(-50%, -50%) scale(1);
+            .sparkle-particle {
+              position: fixed;
+              pointer-events: none;
+              z-index: 10000;
+              border-radius: 50%;
+              transform: translate(-50%, -50%);
+              animation: sparkle-fade 0.8s ease-out forwards;
             }
-            100% {
-              opacity: 0;
-              transform: translate(
-                calc(-50% + var(--dx, 0px)),
-                calc(-50% + var(--dy, 0px))
-              ) scale(0);
+            
+            @keyframes sparkle-fade {
+              0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+              }
+              100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+              }
             }
-          }
         
        
       }</style>
