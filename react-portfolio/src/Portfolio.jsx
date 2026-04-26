@@ -5,13 +5,15 @@ export default function Portfolio() {
   const [scrollY, setScrollY] = useState(0);
   const [activeSection, setActiveSection] = useState('hero');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isDark, setIsDark] = useState(true);
+  const [cursorTrail, setCursorTrail] = useState([]);
   const [sparkles, setSparkles] = useState([]);
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [typewriterText, setTypewriterText] = useState('');
   const [typewriterIndex, setTypewriterIndex] = useState(0);
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
+  const trailIdRef = useRef(0);
+  const sparkleIdRef = useRef(0);
 
   const phrases = [
     'Pursuing Masters in Computer Science',
@@ -79,28 +81,33 @@ export default function Portfolio() {
       });
       if (current) setActiveSection(current);
     };
-    // In your mousemove handler, replace the sparkle logic:
+    // Cursor sparkle trail inspired by classic Tinkerbell effect
     const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
       document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
       document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
+
+      setCursorTrail(prev => [
+        ...prev.slice(-14),
+        { id: `trail-${trailIdRef.current++}`, x: e.clientX, y: e.clientY }
+      ]);
     
-      // Generate 2-4 glitter particles per move
-      const count = Math.floor(Math.random() * 3) + 2;
+      // Generate 5-8 cyan glitter particles per move
+      const count = Math.floor(Math.random() * 4) + 5;
       const newParticles = Array.from({ length: count }, () => {
-        const size = Math.random() * 6 + 3;
-        const angle = Math.random() * 360;
-        const dist = Math.random() * 30 + 10;
+        const size = Math.random() * 5 + 2;
+        const angle = Math.random() * 140 + 20;
+        const dist = Math.random() * 28 + 8;
         const dx = Math.cos((angle * Math.PI) / 180) * dist;
-        const dy = Math.sin((angle * Math.PI) / 180) * dist;
-        const colors = ['#a855f7', '#c084fc', '#e879f9', '#f0abfc', '#d8b4fe', '#ec4899'];
+        const dy = Math.sin((angle * Math.PI) / 180) * dist + (Math.random() * 16 + 8);
+        const colors = ['#00baff', '#38cfff', '#7edfff', '#b5edff', '#e6f9ff'];
         return {
-          id: Date.now() + Math.random(),
+          id: `sparkle-${sparkleIdRef.current++}`,
           x: e.clientX,
           y: e.clientY,
           size,
           dx,
           dy,
+          kind: Math.random() > 0.55 ? 'sparkle-star' : 'sparkle-tiny',
           color: colors[Math.floor(Math.random() * colors.length)],
         };
       });
@@ -121,6 +128,14 @@ export default function Portfolio() {
   }, 1000);
   return () => clearTimeout(timer);
 }, [sparkles]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCursorTrail(prev => (prev.length > 0 ? prev.slice(1) : prev));
+    }, 45);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -329,17 +344,35 @@ export default function Portfolio() {
         )}
       </div>
 
-     {/* Cursor dot */}
-<div
-  className="cursor-dot"
-  style={{ left: mousePosition.x, top: mousePosition.y }}
-/>
+    {/* Cursor line trail */}
+    {cursorTrail.slice(1).map((point, index) => {
+      const prev = cursorTrail[index];
+      const dx = point.x - prev.x;
+      const dy = point.y - prev.y;
+      const length = Math.hypot(dx, dy);
+      const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+      const opacity = ((index + 1) / cursorTrail.length) * 0.65;
 
-    {/* Purple glitter trail */}
+      return (
+        <div
+          key={point.id}
+          className="cursor-line-trail"
+          style={{
+            left: prev.x,
+            top: prev.y,
+            width: Math.max(length, 2),
+            opacity,
+            transform: `translateY(-50%) rotate(${angle}deg)`,
+          }}
+        />
+      );
+    })}
+
+    {/* Cyan glitter trail */}
     {sparkles.map(sparkle => (
       <div
         key={sparkle.id}
-        className="sparkle-particle"
+        className={`sparkle-particle ${sparkle.kind}`}
         style={{
           left: sparkle.x + sparkle.dx,
           top: sparkle.y + sparkle.dy,
@@ -970,7 +1003,7 @@ export default function Portfolio() {
         </div>
       </section>
 
-      <style jsx>{`
+      <style>{`
         /* Gradient color changing text */
         .gradient-text {
           background: linear-gradient(
@@ -1332,31 +1365,41 @@ export default function Portfolio() {
           50% { background-position: 100% 50%; }
         } 
 
-
-        * {
-            cursor: none !important;
-          }
-          
-          .cursor-dot {
-            position: fixed;
-            width: 8px;
-            height: 8px;
-            background: #a855f7;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 10001;
-            transform: translate(-50%, -50%);
-            transition: transform 0.05s linear;
-            box-shadow: 0 0 6px #a855f7;
-          }
-          
             .sparkle-particle {
               position: fixed;
               pointer-events: none;
               z-index: 10000;
               border-radius: 50%;
               transform: translate(-50%, -50%);
-              animation: sparkle-fade 0.8s ease-out forwards;
+              animation: sparkle-fade 0.9s ease-out forwards;
+            }
+
+            .cursor-line-trail {
+              position: fixed;
+              height: 2px;
+              pointer-events: none;
+              z-index: 9999;
+              transform-origin: left center;
+              border-radius: 9999px;
+              background: linear-gradient(90deg, rgba(230, 249, 255, 0.95), rgba(56, 207, 255, 0.65), rgba(0, 186, 255, 0.1));
+              box-shadow: 0 0 8px rgba(56, 207, 255, 0.55);
+            }
+
+            .sparkle-star {
+              border-radius: 0;
+              clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+            }
+
+            .sparkle-tiny {
+              border-radius: 50%;
+            }
+
+            .sparkle-particle:nth-child(2n) {
+              clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+            }
+
+            .sparkle-particle:nth-child(3n) {
+              clip-path: polygon(50% 0%, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0% 50%, 40% 40%);
             }
             
             @keyframes sparkle-fade {
@@ -1369,9 +1412,9 @@ export default function Portfolio() {
                 transform: translate(-50%, -50%) scale(0);
               }
             }
-        
-       
-      }</style>
+
+
+      `}</style>
     </div>
   );
 }
