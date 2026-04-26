@@ -341,14 +341,12 @@ export default function Portfolio() {
         key={sparkle.id}
         className="sparkle-particle"
         style={{
-          left: sparkle.x,
-          top: sparkle.y,
+          left: sparkle.x + sparkle.dx,
+          top: sparkle.y + sparkle.dy,
           width: sparkle.size,
           height: sparkle.size,
           background: sparkle.color,
           boxShadow: `0 0 ${sparkle.size * 1.5}px ${sparkle.color}`,
-          '--dx': `${sparkle.dx}px`,
-          '--dy': `${sparkle.dy}px`,
         }}
       />
     ))}
