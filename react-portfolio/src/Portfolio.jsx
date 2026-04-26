@@ -79,24 +79,34 @@ export default function Portfolio() {
       });
       if (current) setActiveSection(current);
     };
-
+    // In your mousemove handler, replace the sparkle logic:
     const handleMouseMove = (e) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
-      
       document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
       document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
-      
-      const newSparkle = {
-        id: Date.now() + Math.random(),
-        x: e.clientX,
-        y: e.clientY,
-        size: Math.random() * 8 + 4,
-        life: 1
-      };
-      
-      setSparkles(prev => [...prev.slice(-20), newSparkle]);
+    
+      // Generate 2-4 glitter particles per move
+      const count = Math.floor(Math.random() * 3) + 2;
+      const newParticles = Array.from({ length: count }, () => {
+        const size = Math.random() * 6 + 3;
+        const angle = Math.random() * 360;
+        const dist = Math.random() * 30 + 10;
+        const dx = Math.cos((angle * Math.PI) / 180) * dist;
+        const dy = Math.sin((angle * Math.PI) / 180) * dist;
+        const colors = ['#a855f7', '#c084fc', '#e879f9', '#f0abfc', '#d8b4fe', '#ec4899'];
+        return {
+          id: Date.now() + Math.random(),
+          x: e.clientX,
+          y: e.clientY,
+          size,
+          dx,
+          dy,
+          color: colors[Math.floor(Math.random() * colors.length)],
+        };
+      });
+    
+      setSparkles(prev => [...prev.slice(-40), ...newParticles]);
     };
-
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
@@ -106,14 +116,11 @@ export default function Portfolio() {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setSparkles(prev => prev.filter(s => s.life > 0).map(s => ({
-        ...s,
-        life: s.life - 0.05
-      })));
-    }, 50);
-    return () => clearInterval(interval);
-  }, []);
+  const timer = setTimeout(() => {
+    setSparkles(prev => prev.slice(-10));
+  }, 1000);
+  return () => clearTimeout(timer);
+}, [sparkles]);
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
@@ -322,20 +329,29 @@ export default function Portfolio() {
         )}
       </div>
 
-      {/* Sparkle Cursor Trail */}
-      {sparkles.map(sparkle => (
-        <div
-          key={sparkle.id}
-          className="sparkle"
-          style={{
-            left: sparkle.x,
-            top: sparkle.y,
-            width: sparkle.size,
-            height: sparkle.size,
-            opacity: sparkle.life,
-          }}
-        />
-      ))}
+     {/* Cursor dot */}
+<div
+  className="cursor-dot"
+  style={{ left: mousePosition.x, top: mousePosition.y }}
+/>
+
+    {/* Purple glitter trail */}
+    {sparkles.map(sparkle => (
+      <div
+        key={sparkle.id}
+        className="sparkle-particle"
+        style={{
+          left: sparkle.x,
+          top: sparkle.y,
+          width: sparkle.size,
+          height: sparkle.size,
+          background: sparkle.color,
+          boxShadow: `0 0 ${sparkle.size * 1.5}px ${sparkle.color}`,
+          '--dx': `${sparkle.dx}px`,
+          '--dy': `${sparkle.dy}px`,
+        }}
+      />
+    ))}
 
       {/* Navigation  */}
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrollY > 50 ? (isDark ? 'bg-gray-900/95' : 'bg-white/95') + ' backdrop-blur-md shadow-lg' : 'bg-transparent'}`}>
@@ -1192,16 +1208,6 @@ export default function Portfolio() {
           50% { transform: translateY(-20px); }
         }
 
-        .sparkle {
-          position: fixed;
-          pointer-events: none;
-          z-index: 9999;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(139, 92, 246, 1) 0%, rgba(236, 72, 153, 0.8) 50%, transparent 100%);
-          box-shadow: 0 0 10px rgba(139, 92, 246, 0.8);
-          animation: sparkle-fade 0.8s ease-out forwards;
-        }
-
         .light-glitter {
           background-image: radial-gradient(circle at 10% 10%, rgba(255,255,255,0.7) 2px, transparent 6px),
                             radial-gradient(circle at 30% 30%, rgba(255,255,255,0.6) 1.5px, transparent 5px),
@@ -1330,24 +1336,47 @@ export default function Portfolio() {
 
 
         * {
-          cursor: none !important;
-        }
-
-        body::after {
-          content: '';
-          position: fixed;
-          width: 20px;
-          height: 20px;
-          border: 2px solid rgba(139, 92, 246, 0.6);
-          border-radius: 50%;
-          pointer-events: none;
-          z-index: 10000;
-          left: var(--mouse-x, 0);
-          top: var(--mouse-y, 0);
-          transform: translate(-50%, -50%);
-          transition: width 0.2s, height 0.2s, border-color 0.2s;
-        }
-      `}</style>
+            cursor: none !important;
+          }
+          
+          .cursor-dot {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background: #a855f7;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10001;
+            transform: translate(-50%, -50%);
+            transition: transform 0.05s linear;
+            box-shadow: 0 0 6px #a855f7;
+          }
+          
+          .sparkle-particle {
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: sparkle-burst 0.8s ease-out forwards;
+          }
+          
+          @keyframes sparkle-burst {
+            0% {
+              opacity: 1;
+              transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+              opacity: 0;
+              transform: translate(
+                calc(-50% + var(--dx, 0px)),
+                calc(-50% + var(--dy, 0px))
+              ) scale(0);
+            }
+          }
+        
+       
+      }</style>
     </div>
   );
 }
